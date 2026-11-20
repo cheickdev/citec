@@ -4,7 +4,10 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { hashSecret, refreshMemberCookie, requireMember, verifySecret } from "@/lib/auth";
 import { str, today } from "@/lib/util";
-import { prospectData } from "@/lib/prospects";
+import { P_STATUS, prospectData } from "@/lib/prospects";
+import { after } from "next/server";
+import { alertConfigured, sendAdminAlert } from "@/lib/alert";
+import { dayLabel, fcfa } from "@/lib/util";
 
 const back = () => revalidatePath("/", "layout");
 
@@ -70,7 +73,27 @@ export async function saveProspect(_: PState, f: FormData): Promise<PState> {
     back();
     return { go: "/clients" };
   }
-  await prisma.prospect.create({ data: { ...d, memberId: m.id } });
+  const p = await prisma.prospect.create({ data: { ...d, memberId: m.id }, include: { project: { select: { name: true } } } });
+  // Alerte WhatsApp a l'admin, envoyee apres la reponse (le membre n'attend pas).
+  if (alertConfigured()) {
+    const opt = (cond: unknown, line: string) => (cond ? [line] : []);
+    const text = [
+      `🤝 CITEC : nouveau client à contacter`,
+      `Ajouté par : ${m.name}`,
+      ``,
+      `👤 ${p.name}${p.gender === "F" ? " (femme)" : p.gender === "M" ? " (homme)" : ""}`,
+      ...opt(p.phone, `📞 ${p.phone}`),
+      ...opt(p.quartier, `📍 ${p.quartier}`),
+      ...opt(p.network || p.account, `📱 ${[p.network, p.account].filter(Boolean).join(" · ")}`),
+      ...opt(p.meeting || p.meetingDate, `📅 RDV : ${[p.meeting, p.meetingDate && dayLabel(p.meetingDate), p.meetingTime && `à ${p.meetingTime}`].filter(Boolean).join(" · ")}`),
+      ...opt(p.travelFee > 0, `🚕 Frais de déplacement : ${fcfa(p.travelFee)}`),
+      ...opt(p.project, `🗂️ ${p.project?.name}`),
+      `Statut : ${P_STATUS[p.status]?.label ?? p.status}`,
+      ``,
+      `→ https://admin.citec.app/clients/${p.id}`,
+    ].join("\n");
+    after(() => sendAdminAlert(text).then(() => undefined));
+  }
   back();
   return { ok: `✓ ${d.name} ajouté(e).` };
 }

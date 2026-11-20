@@ -276,3 +276,12 @@ export async function deleteFinEntry(f: FormData) {
   await prisma.finEntry.deleteMany({ where: { id: str(f.get("id")), source: "MANUAL" } });
   back("/finances");
 }
+
+// ---- Alerte WhatsApp : message d'essai -------------------------------------------
+export async function testAlert(_: FormState): Promise<FormState> {
+  await requireAdmin();
+  const { alertConfigured, sendAdminAlert } = await import("@/lib/alert");
+  if (!alertConfigured()) return { error: "La clé CALLMEBOT_APIKEY n'est pas encore dans Vercel." };
+  const r = await sendAdminAlert("✅ CITEC : les alertes WhatsApp fonctionnent. Vous serez prévenu à chaque nouveau client à contacter.");
+  return r.ok ? { ok: "Message d'essai envoyé ✓ Regardez votre WhatsApp." } : { error: `Échec : ${r.info}` };
+}

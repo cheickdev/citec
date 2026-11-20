@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db";
 import { P_STATUS } from "@/lib/prospects";
 import { addMonths, fcfa, monthLabel, thisMonth, today } from "@/lib/util";
 import ProspectRow from "@/components/ProspectRow";
+import AlertCard from "@/components/AlertCard";
+import { adminWhatsapp, alertConfigured } from "@/lib/alert";
 
 export const metadata = { title: "Clients à contacter" };
 
@@ -42,6 +44,7 @@ export default async function AllProspects({ searchParams }: { searchParams: Pro
           <a className="btn ghost sm" href={qs({ mo: addMonths(month, 1) })}>→</a>
         </div>
       </div>
+      <AlertCard on={alertConfigured()} number={adminWhatsapp()} />
       <div className="tiles">
         <div className="tile"><div className="label">Clients ajoutés</div><div className="value">{tot.added}</div></div>
         <div className="tile"><div className="label">Rendez-vous</div><div className="value">{tot.meetings}</div></div>
