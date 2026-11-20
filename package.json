@@ -1,0 +1,28 @@
+{
+  "name": "citec",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CITEC : site mère de l'entreprise (admin.citec.app) et espace des membres (member.citec.app)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && prisma migrate deploy && next build",
+    "build:local": "prisma generate && next build",
+    "start": "next start",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "6.2.1",
+    "@vercel/blob": "0.27.3",
+    "next": "15.5.29",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "zod": "3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2",
+    "prisma": "6.2.1",
+    "typescript": "5.7.2"
+  }
+}

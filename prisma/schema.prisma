@@ -1,0 +1,174 @@
+// CITEC — site mère de l'entreprise.
+// admin.citec.app : la direction (projets, tâches, membres, paie, finances).
+// member.citec.app : l'espace de chaque membre (ses tâches, annonces, présence, paie).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Membre de l'entreprise. role ADMIN : peut aussi entrer dans admin.citec.app.
+model Member {
+  id         String          @id @default(cuid())
+  name       String
+  phone      String          @unique // chiffres seulement (identifiant de connexion)
+  email      String          @default("")
+  jobTitle   String          @default("") // poste : developpeur, agent commercial...
+  role       String          @default("MEMBER") // MEMBER | ADMIN
+  passHash   String
+  active     Boolean         @default(true)
+  salary     Int             @default(0) // salaire mensuel de base (F CFA)
+  createdAt  DateTime        @default(now())
+  projects   ProjectMember[]
+  tasks      Task[]          @relation("assignee")
+  comments   TaskComment[]
+  attendance Attendance[]
+  payslips   Payslip[]
+}
+
+// Projet suivi : Simple Pos, 2MT Shopping, FreePhone...
+model Project {
+  id        String          @id @default(cuid())
+  slug      String          @unique
+  name      String
+  url       String          @default("") // site du projet
+  color     String          @default("#1d4ed8")
+  summary   String          @default("")
+  kind      String          @default("other") // simplepos | 2mt | freephone | other (chiffres en direct)
+  statsUrl  String          @default("") // adresse des chiffres (protegee par la cle)
+  statsKey  String          @default("") // cle secrete partagee avec le projet
+  active    Boolean         @default(true)
+  order     Int             @default(0)
+  createdAt DateTime        @default(now())
+  members   ProjectMember[]
+  tasks     Task[]
+  finances  FinEntry[]
+  posts     Announcement[]
+  documents Document[]
+  snapshots StatSnapshot[]
+}
+
+model ProjectMember {
+  projectId String
+  memberId  String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  member    Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, memberId])
+}
+
+model Task {
+  id          String        @id @default(cuid())
+  projectId   String?
+  project     Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  title       String
+  description String        @default("")
+  status      String        @default("TODO") // TODO | DOING | DONE
+  priority    String        @default("NORMAL") // LOW | NORMAL | HIGH
+  assigneeId  String?
+  assignee    Member?       @relation("assignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  dueDate     String        @default("") // AAAA-MM-JJ
+  createdBy   String        @default("")
+  createdAt   DateTime      @default(now())
+  doneAt      DateTime?
+  comments    TaskComment[]
+
+  @@index([status])
+  @@index([assigneeId])
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  memberId  String?
+  member    Member?  @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  author    String
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  projectId String? // null = toute l'entreprise
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  title     String
+  url       String
+  fileName  String
+  size      Int      @default(0)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+}
+
+// Presence : une ligne par membre et par jour.
+model Attendance {
+  id       String    @id @default(cuid())
+  memberId String
+  member   Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  day      String // AAAA-MM-JJ
+  inAt     DateTime
+  outAt    DateTime?
+  note     String    @default("")
+
+  @@unique([memberId, day])
+}
+
+// Fiche de paie / commission d'un mois.
+model Payslip {
+  id         String    @id @default(cuid())
+  memberId   String
+  member     Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  month      String // AAAA-MM
+  base       Int       @default(0)
+  commission Int       @default(0)
+  bonus      Int       @default(0)
+  deduction  Int       @default(0)
+  note       String    @default("")
+  paidAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([memberId, month])
+}
+
+// Recette ou depense (F CFA). source AUTO = recette lue dans les chiffres du projet.
+model FinEntry {
+  id        String   @id @default(cuid())
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  kind      String // INCOME | EXPENSE
+  amount    Int
+  category  String   @default("")
+  label     String   @default("")
+  day       String // AAAA-MM-JJ
+  source    String   @default("MANUAL") // MANUAL | AUTO | PAYROLL
+  autoKey   String?  @unique // ex. auto:simple-pos:2026-11
+  createdAt DateTime @default(now())
+
+  @@index([day])
+}
+
+// Derniers chiffres lus pour un projet (affiches meme si le projet ne repond pas).
+model StatSnapshot {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@index([projectId, createdAt])
+}
