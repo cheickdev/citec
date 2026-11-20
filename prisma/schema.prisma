@@ -28,6 +28,7 @@ model Member {
   comments   TaskComment[]
   attendance Attendance[]
   payslips   Payslip[]
+  prospects  Prospect[]
 }
 
 // Projet suivi : Simple Pos, 2MT Shopping, FreePhone...
@@ -50,6 +51,7 @@ model Project {
   posts     Announcement[]
   documents Document[]
   snapshots StatSnapshot[]
+  prospects Prospect[]
 }
 
 model ProjectMember {
@@ -171,4 +173,30 @@ model StatSnapshot {
   createdAt DateTime @default(now())
 
   @@index([projectId, createdAt])
+}
+
+// Client a contacter (prospect) ajoute par un membre (agent commercial).
+model Prospect {
+  id          String   @id @default(cuid())
+  memberId    String
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  name        String
+  phone       String   @default("")
+  quartier    String   @default("")
+  gender      String   @default("") // F | M
+  network     String   @default("") // TikTok, Facebook, Instagram, WhatsApp...
+  account     String   @default("") // nom du compte sur le reseau
+  meeting     String   @default("") // rendez-vous : lieu / objet
+  meetingDate String   @default("") // AAAA-MM-JJ
+  meetingTime String   @default("") // HH:MM
+  travelFee   Int      @default(0) // frais de deplacement (F CFA)
+  status      String   @default("TODO") // TODO | CONTACTED | MEETING | WON | LOST
+  note        String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([memberId, createdAt])
+  @@index([meetingDate])
 }

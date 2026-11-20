@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { hashSecret, refreshMemberCookie, requireMember, verifySecret } from "@/lib/auth";
 import { str, today } from "@/lib/util";
+import { prospectData } from "@/lib/prospects";
 
 const back = () => revalidatePath("/", "layout");
 
@@ -52,4 +53,31 @@ export async function changePassword(_: { error?: string; ok?: string } | null, 
   const u = await prisma.member.update({ where: { id: m.id }, data: { passHash: hashSecret(next) } });
   await refreshMemberCookie(u);
   return { ok: "Mot de passe changé ✓" };
+}
+
+// ---- Clients a contacter (seulement les siens) ------------------------------------
+
+type PState = { error?: string; ok?: string; go?: string } | null;
+
+export async function saveProspect(_: PState, f: FormData): Promise<PState> {
+  const m = await requireMember();
+  const d = prospectData(f);
+  if (d.name.length < 2) return { error: "Indiquez le nom du client." };
+  const id = str(f.get("id"));
+  if (id) {
+    const r = await prisma.prospect.updateMany({ where: { id, memberId: m.id }, data: d });
+    if (!r.count) return { error: "Client introuvable." };
+    back();
+    return { go: "/clients" };
+  }
+  await prisma.prospect.create({ data: { ...d, memberId: m.id } });
+  back();
+  return { ok: `✓ ${d.name} ajouté(e).` };
+}
+
+export async function deleteProspect(_: PState, f: FormData): Promise<PState> {
+  const m = await requireMember();
+  await prisma.prospect.deleteMany({ where: { id: str(f.get("id")), memberId: m.id } });
+  back();
+  return { go: "/clients" };
 }

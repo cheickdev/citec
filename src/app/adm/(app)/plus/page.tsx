@@ -1,6 +1,7 @@
 export const metadata = { title: "Plus" };
 
 const LINKS = [
+  ["/clients", "🤝", "Clients à contacter", "Prospects et rendez-vous des membres"],
   ["/projets", "🗂️", "Projets", "Sites suivis et clés des chiffres"],
   ["/annonces", "📣", "Annonces", "Messages aux membres"],
   ["/documents", "📁", "Documents", "Fichiers partagés"],
