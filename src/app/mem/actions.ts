@@ -6,7 +6,7 @@ import { hashSecret, refreshMemberCookie, requireMember, verifySecret } from "@/
 import { str, today } from "@/lib/util";
 import { P_STATUS, prospectData } from "@/lib/prospects";
 import { after } from "next/server";
-import { alertConfigured, sendAdminAlert } from "@/lib/alert";
+import { alertReady, sendAdminAlert } from "@/lib/alert";
 import { dayLabel, fcfa } from "@/lib/util";
 
 const back = () => revalidatePath("/", "layout");
@@ -75,7 +75,7 @@ export async function saveProspect(_: PState, f: FormData): Promise<PState> {
   }
   const p = await prisma.prospect.create({ data: { ...d, memberId: m.id }, include: { project: { select: { name: true } } } });
   // Alerte WhatsApp a l'admin, envoyee apres la reponse (le membre n'attend pas).
-  if (alertConfigured()) {
+  if (await alertReady()) {
     const opt = (cond: unknown, line: string) => (cond ? [line] : []);
     const text = [
       `🤝 CITEC : nouveau client à contacter`,

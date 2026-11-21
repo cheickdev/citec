@@ -200,3 +200,10 @@ model Prospect {
   @@index([memberId, createdAt])
   @@index([meetingDate])
 }
+
+// Reglages simples (ex. discussion Telegram qui recoit les alertes).
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

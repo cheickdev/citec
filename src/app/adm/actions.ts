@@ -277,11 +277,29 @@ export async function deleteFinEntry(f: FormData) {
   back("/finances");
 }
 
-// ---- Alerte WhatsApp : message d'essai -------------------------------------------
+// ---- Alertes (Telegram, WhatsApp) --------------------------------------------------
 export async function testAlert(_: FormState): Promise<FormState> {
   await requireAdmin();
-  const { alertConfigured, sendAdminAlert } = await import("@/lib/alert");
-  if (!alertConfigured()) return { error: "La clé CALLMEBOT_APIKEY n'est pas encore dans Vercel." };
-  const r = await sendAdminAlert("✅ CITEC : les alertes WhatsApp fonctionnent. Vous serez prévenu à chaque nouveau client à contacter.");
-  return r.ok ? { ok: "Message d'essai envoyé ✓ Regardez votre WhatsApp." } : { error: `Échec : ${r.info}` };
+  const { alertReady, sendAdminAlert } = await import("@/lib/alert");
+  if (!(await alertReady())) return { error: "Aucune alerte n'est encore réglée (voir les étapes ci-dessus)." };
+  const r = await sendAdminAlert("✅ CITEC : les alertes fonctionnent. Vous serez prévenu à chaque nouveau client à contacter.");
+  return r.ok ? { ok: `Message d'essai envoyé (${r.info}).` } : { error: `Échec : ${r.info}` };
+}
+
+export async function linkTelegramAction(_: FormState): Promise<FormState> {
+  await requireAdmin();
+  const { linkTelegram, sendAdminAlert } = await import("@/lib/alert");
+  const r = await linkTelegram();
+  if (!r.ok) return { error: r.info };
+  await sendAdminAlert(`✅ CITEC est relié à ce Telegram (${r.info}). Les nouveaux clients à contacter arriveront ici.`);
+  back();
+  return { ok: `Relié à « ${r.info} » ✓ Un message de confirmation vient d'être envoyé.` };
+}
+
+export async function unlinkTelegramAction(f: FormData) {
+  void f;
+  await requireAdmin();
+  const { unlinkTelegram } = await import("@/lib/alert");
+  await unlinkTelegram();
+  back();
 }
