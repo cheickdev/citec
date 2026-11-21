@@ -40,7 +40,12 @@ export async function linkTelegram(): Promise<{ ok: boolean; info: string }> {
       .map((u) => u.message?.chat ?? u.my_chat_member?.chat)
       .filter(Boolean) as { id: number; title?: string; first_name?: string; last_name?: string; username?: string }[];
     const chat = msgs.at(-1);
-    if (!chat) return { ok: false, info: "Aucun message reçu : ouvrez votre robot dans Telegram, envoyez /start, puis réessayez." };
+    if (!chat) {
+      // Pour aider : quel robot correspond a ce jeton ?
+      const me = await fetch(tgApi("getMe"), { cache: "no-store", signal: AbortSignal.timeout(10_000) }).then((x) => x.json()).catch(() => null);
+      const bot = me?.ok ? `@${me.result.username}` : "votre robot";
+      return { ok: false, info: `Aucun message reçu par ${bot}. Dans Telegram, ouvrez la discussion avec ${bot} (pas BotFather), écrivez « bonjour », envoyez, puis réessayez.` };
+    }
     const title = chat.title || [chat.first_name, chat.last_name].filter(Boolean).join(" ") || chat.username || String(chat.id);
     await prisma.setting.upsert({ where: { key: TG_CHAT }, create: { key: TG_CHAT, value: JSON.stringify({ id: String(chat.id), title }) }, update: { value: JSON.stringify({ id: String(chat.id), title }) } });
     return { ok: true, info: title };
