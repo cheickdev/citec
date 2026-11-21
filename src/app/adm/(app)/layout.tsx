@@ -10,6 +10,7 @@ const NAV: NavItem[] = [
   { href: "/finances", label: "Finances", ico: "💰" },
   { href: "/plus", label: "Plus", ico: "☰", desktop: false },
   { href: "/clients", label: "Clients à contacter", ico: "🤝", mobile: false },
+  { href: "/messages", label: "Messages du site", ico: "✉️", mobile: false },
   { href: "/projets", label: "Projets", ico: "🗂️", mobile: false },
   { href: "/annonces", label: "Annonces", ico: "📣", mobile: false },
   { href: "/documents", label: "Documents", ico: "📁", mobile: false },

@@ -2,6 +2,7 @@ export const metadata = { title: "Plus" };
 
 const LINKS = [
   ["/clients", "🤝", "Clients à contacter", "Prospects et rendez-vous des membres"],
+  ["/messages", "✉️", "Messages du site", "Formulaire « Contactez-nous » de citec.app"],
   ["/projets", "🗂️", "Projets", "Sites suivis et clés des chiffres"],
   ["/annonces", "📣", "Annonces", "Messages aux membres"],
   ["/documents", "📁", "Documents", "Fichiers partagés"],

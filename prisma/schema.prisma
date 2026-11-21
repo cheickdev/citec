@@ -207,3 +207,17 @@ model Setting {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+// Message envoye depuis le formulaire « Contactez-nous » de citec.app.
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String   @default("")
+  email     String   @default("")
+  subject   String   @default("")
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
