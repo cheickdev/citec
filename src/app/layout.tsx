@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   robots: { index: false },
   icons: { icon: "/favicon.png", apple: "/apple-touch-icon.png" },
 };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1d4ed8" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0d1117" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
